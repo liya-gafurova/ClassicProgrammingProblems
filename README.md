@@ -1,4 +1,4 @@
-##Exercises from book
+## Exercises from book
 https://www.manning.com/books/classic-computer-science-problems-in-python
 
 Each directory corresponds to a Chapter in the book.
