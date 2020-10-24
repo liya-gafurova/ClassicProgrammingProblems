@@ -9,7 +9,7 @@
 
 
 ## ?? CHOOSE ONE OF 6 TO IMPLEMENT ??
-- Fibonacci
+- Hanoi towers
 
 ## Some theory
 **Memoization** is a technique in which you store the results of computational tasks when

@@ -1,16 +1,36 @@
-# This is a sample Python script.
+from small_problems.lib import fib6, fib4, factorial, Stack, hanoi
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Fibonaccci Secuence
+#  recursive, cache, iterative
+for i in fib6(50):
+    print(i)
 
+print(fib4(50))
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+print(factorial(5))
+# ====================================================================
+# Hanoi tower
+num_discs: int = 3
+tower_a: Stack[str] = Stack()
+tower_b: Stack[str] = Stack()
+tower_c: Stack[str] = Stack()
 
+for i in range(num_discs , 0, -1):
+    tower_a.push(f"item _{i}")
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+print(tower_a)
+print(tower_b)
+print(tower_c)
+hanoi(begin=tower_a, end=tower_c, temp=tower_c, n = 3)
+print(tower_a)
+print(tower_b)
+print(tower_c)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# returns
+# ['item _3', 'item _2', 'item _1']
+# []
+# []
+# -----------
+# []
+# []
+# ['item _1', 'item _2', 'item _3']  - ERROR

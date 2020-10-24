@@ -7,6 +7,7 @@
 # fib(n) = fib(n - 1) + fib(n - 2)
 from typing import Generator
 from functools import lru_cache
+from typing import TypeVar, Generic, List
 
 
 def factorial(m):
@@ -36,9 +37,30 @@ def fib6(n: int) -> Generator[int, None, None]:
         yield next  # main generation step
 
 
-for i in fib6(50):
-    print(i)
+# TASK #2
+#  Hanoi Tower
 
-print(fib4(50))
+T = TypeVar('T')
+class Stack(Generic[T]):
+    def __init__(self) -> None:
+        self._container: List[T] = []
+    def push(self, item: T) -> None:
+        self._container.append(item)
+    def pop(self) -> T:
+        return self._container.pop()
 
-print(factorial(5))
+    def __repr__(self) -> str:
+        return repr(self._container)
+
+
+
+def hanoi(begin: Stack[int], end: Stack[int], temp: Stack[int], n: int) -> None:
+    if n == 1:
+
+        end.push(begin.pop())
+
+    else:
+        hanoi(begin, temp, end, n - 1)
+        hanoi(begin, end, temp, 1)
+        hanoi(temp, end, begin, n - 1)
+
