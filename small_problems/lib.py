@@ -56,11 +56,17 @@ class Stack(Generic[T]):
 
 def hanoi(begin: Stack[int], end: Stack[int], temp: Stack[int], n: int) -> None:
     if n == 1:
-
         end.push(begin.pop())
-
     else:
         hanoi(begin, temp, end, n - 1)
         hanoi(begin, end, temp, 1)
         hanoi(temp, end, begin, n - 1)
 
+
+def hanoi_multi_tower(begin: Stack[int], end: Stack[int], temp: List[Stack[int]], n: int) -> None:
+    if n == 1:
+        end.push(begin.pop())
+    else:
+        hanoi_multi_tower(begin=begin, end=temp[i], temp=temp[j!=i]+end, n = n-1)
+        hanoi_multi_tower(begin=begin, end=end, temp=temp[] + end, n=1)
+        hanoi_multi_tower(begin=temp[i], end=end, temp=temp[j != i] + begin, n=n - 1)
