@@ -1,4 +1,6 @@
-from small_problems.lib import fib6, fib4, factorial, Stack, hanoi
+from typing import List
+
+from small_problems.lib import fib6, fib4, factorial, Stack, hanoi, towerOfHanoi
 
 # Fibonaccci Secuence
 #  recursive, cache, iterative
@@ -8,29 +10,31 @@ for i in fib6(50):
 print(fib4(50))
 
 print(factorial(5))
+
+
 # ====================================================================
 # Hanoi tower
-num_discs: int = 3
-tower_a: Stack[str] = Stack()
-tower_b: Stack[str] = Stack()
-tower_c: Stack[str] = Stack()
 
-for i in range(num_discs , 0, -1):
-    tower_a.push(f"item _{i}")
 
-print(tower_a)
-print(tower_b)
-print(tower_c)
-hanoi(begin=tower_a, end=tower_c, temp=tower_c, n = 3)
-print(tower_a)
-print(tower_b)
-print(tower_c)
+def show_towers(towers: List[Stack[str]]) -> None:
+    for tower in towers:
+        print(tower)
+    print("------------")
 
-# returns
-# ['item _3', 'item _2', 'item _1']
-# []
-# []
-# -----------
-# []
-# []
-# ['item _1', 'item _2', 'item _3']  - ERROR
+
+def test_hanoi_tower(num_disks=3, num_towers=3):
+    TOWER_NAMES = ["A", "B", "C", "D", "E", 'F']
+    towers = [Stack(f"{TOWER_NAMES[i]}") for i in range(num_towers)]
+
+    for i in range(num_disks, 0, -1):
+        towers[0].push(i)
+
+    show_towers(towers)
+    if num_towers > 3:
+        towerOfHanoi(*towers, n=num_disks)
+    else:
+        hanoi(*towers, n=num_disks)
+    show_towers(towers)
+
+
+test_hanoi_tower(4, 4)

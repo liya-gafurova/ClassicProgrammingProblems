@@ -41,32 +41,53 @@ def fib6(n: int) -> Generator[int, None, None]:
 #  Hanoi Tower
 
 T = TypeVar('T')
+
+
 class Stack(Generic[T]):
-    def __init__(self) -> None:
+    def __init__(self, name) -> None:
+        self.tower_name = name
         self._container: List[T] = []
+
     def push(self, item: T) -> None:
         self._container.append(item)
+
     def pop(self) -> T:
         return self._container.pop()
 
+    def last(self):
+        try:
+            return self._container[self._count() - 1]
+        except Exception as ex:
+            None
+
+    def _count(self):
+        return len(self._container)
+
     def __repr__(self) -> str:
-        return repr(self._container)
+        return repr(f"{self.tower_name}: {self._container}")
 
 
-
-def hanoi(begin: Stack[int], end: Stack[int], temp: Stack[int], n: int) -> None:
+def hanoi(begin: Stack[int], temp: Stack[int], end: Stack[int], n: int) -> None:
     if n == 1:
+        print(f"Form tower {begin} put disk on tower {end}")
         end.push(begin.pop())
     else:
-        hanoi(begin, temp, end, n - 1)
-        hanoi(begin, end, temp, 1)
-        hanoi(temp, end, begin, n - 1)
+
+        hanoi(begin, end, temp, n - 1)
+        hanoi(begin, temp, end, 1)
+        hanoi(temp, begin, end, n - 1)
 
 
-def hanoi_multi_tower(begin: Stack[int], end: Stack[int], temp: List[Stack[int]], n: int) -> None:
+def towerOfHanoi(begin, temp1, temp2, end, n):
+    if n == 0:
+        return
     if n == 1:
+        print(f"Form tower {begin} put disk on tower {end}")
         end.push(begin.pop())
+        return
     else:
-        hanoi_multi_tower(begin=begin, end=temp[i], temp=temp[j!=i]+end, n = n-1)
-        hanoi_multi_tower(begin=begin, end=end, temp=temp[] + end, n=1)
-        hanoi_multi_tower(begin=temp[i], end=end, temp=temp[j != i] + begin, n=n - 1)
+        towerOfHanoi(begin, temp1, end, temp1, n - 2)
+        towerOfHanoi(begin, temp1, end, temp2, 1)
+        towerOfHanoi(begin, temp1, temp2, end, 1)
+        towerOfHanoi(temp2, begin, temp1, end, 1)
+        towerOfHanoi(temp1, begin, temp2, end, n - 2)
