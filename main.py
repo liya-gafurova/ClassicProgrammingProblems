@@ -77,7 +77,7 @@ print(binary_contains(sorted(["john", "mark", "ronald", "sarah"]), "sheila"))
 # Test DFS
 m: Maze = Maze()
 print(m)
-solution1: Optional[Node[MazeLocation]] = dfs(m.start, m.goal_test,m.successors)
+solution1, state_counter  = dfs(m.start, m.goal_test,m.successors)
 if solution1 is None:
     print("No solution found using depth-first search!")
 else:
@@ -85,9 +85,10 @@ else:
     m.mark(path1)
     print(m)
     m.clear(path1)
+    print(state_counter)
 
 # Test BFS
-solution2: Optional[Node[MazeLocation]] = bfs(m.start, m.goal_test, m.successors)
+solution2, state_counter = bfs(m.start, m.goal_test, m.successors)
 if solution2 is None:
     print("No solution found using breadth-first search!")
 else:
@@ -95,13 +96,15 @@ else:
     m.mark(path2)
     print(m)
     m.clear(path2)
+    print(f"state_counter = {state_counter}")
 
 # Test A*
 distance: Callable[[MazeLocation], float] = manhattan_distance(m.goal)
-solution3: Optional[Node[MazeLocation]] = astar(m.start, m.goal_test, m.successors, distance)
+solution3 , state_counter = astar(m.start, m.goal_test, m.successors, distance)
 if solution3 is None:
     print("No solution found using A*!")
 else:
     path3: List[MazeLocation] = node_to_path(solution3)
     m.mark(path3)
     print(m)
+    print(f"state_counter = {state_counter}")
