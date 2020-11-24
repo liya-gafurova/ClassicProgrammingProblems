@@ -1,7 +1,7 @@
 # Search problems
 
-1. DNA searh 
-2. Maze soliving 
+1. DNA search 
+2. Maze solving 
 3. Missionaries and cannibals
 4. Real-world applications
 
@@ -19,6 +19,11 @@ Base class for creating enumerated constants that are also subclasses of int.
 
 * **enum.unique()**
 Enum class decorator that ensures only one name is bound to any one value.
+
+Basic idea: create custom class with access methods
+* Stack
+* Queue
+* PriorityQueue (heappop, heappush)
 
 ## Algorithms
 ###Search Algorithms:  
@@ -43,3 +48,5 @@ time cost of each individual search.
 Generics
 
 1. Create type using *TypeVar* from *typing* . You may need to override operators (>, <, >=, <=, ==) with *bound* parameter of *TypeVar*: for that create class inherited from *typing.Protocol*
+
+2. if function is called many  times with the repeated number of parametres, use function witch returns other function (see *lib.manhattan_distance()*)

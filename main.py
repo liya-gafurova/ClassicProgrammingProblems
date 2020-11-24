@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Callable
 
 from small_problems.lib import fib6, fib4, factorial, Stack, hanoi, towerOfHanoi
 from search_problems.lib import Codon, Gene, Nucleotide, linear_search, string_to_gene, binary_search, linear_contains, \
-    binary_contains, Maze, dfs, Node, MazeLocation, node_to_path, bfs
+    binary_contains, Maze, dfs, Node, MazeLocation, node_to_path, bfs, manhattan_distance, astar
 
 
 # ====================================================================
@@ -95,3 +95,13 @@ else:
     m.mark(path2)
     print(m)
     m.clear(path2)
+
+# Test A*
+distance: Callable[[MazeLocation], float] = manhattan_distance(m.goal)
+solution3: Optional[Node[MazeLocation]] = astar(m.start, m.goal_test, m.successors, distance)
+if solution3 is None:
+    print("No solution found using A*!")
+else:
+    path3: List[MazeLocation] = node_to_path(solution3)
+    m.mark(path3)
+    print(m)

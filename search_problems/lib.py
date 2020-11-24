@@ -1,15 +1,13 @@
 import random
-from collections import deque
 from enum import IntEnum, Enum
-from typing import Tuple, List, Optional, TypeVar, Iterable, Protocol, Any, NamedTuple, Generic, Callable, Set, Deque
+from typing import Tuple, List, Optional, TypeVar, Iterable, Protocol, Any, NamedTuple, Generic, Callable, Set, Deque, \
+    Dict
+from .data_structures import Stack, C, T, Node, Queue, PriorityQueue
 
 Nucleotide: IntEnum = IntEnum("Nucleotide", ["A", "C", "G", "T"])
 
 Codon = Tuple[Nucleotide, Nucleotide, Nucleotide]  # type alias
 Gene = List[Codon]  # type alias
-
-T = TypeVar("T")
-C = TypeVar("C", bound="Comparable")
 
 
 class Comparable(Protocol):
@@ -98,51 +96,6 @@ class Cell(str, Enum):
 class MazeLocation(NamedTuple):
     row: int
     column: int
-
-
-class Stack(Generic[T]):
-    def __init__(self) -> None:
-        self._container: List[T] = []
-
-    @property
-    def empty(self) -> bool:
-        return not self._container
-
-    # not is true for empty container
-    def push(self, item: T) -> None:
-        self._container.append(item)
-
-    def pop(self) -> T:
-        return self._container.pop()
-
-    def __repr__(self) -> str:
-        return repr(self._container)
-
-class Queue(Generic[T]):
-    def __init__(self) -> None:
-        self._container: Deque[T] = deque()
-    @property
-    def empty(self) -> bool:
-        return not self._container
-    # not is true for empty container
-    def push(self, item: T) -> None:
-        self._container.append(item)
-    def pop(self) -> T:
-        return self._container.popleft()
-    # FIFO
-    def __repr__(self) -> str:
-        return repr(self._container)
-
-class Node(Generic[T]):
-    def __init__(self, state: T, parent, cost: float = 0.0,
-                 heuristic: float = 0.0) -> None:
-        self.state: T = state
-        self.parent: Optional[Node] = parent
-        self.cost: float = cost
-        self.heuristic: float = heuristic
-
-    def __lt__(self, other) -> bool:
-        return (self.cost + self.heuristic) < (other.cost + other.heuristic)
 
 
 class Maze:
@@ -252,11 +205,41 @@ def bfs(initial: T, goal_test: Callable[[T], bool], successors: Callable[[T], Li
             return current_node
         # check where we can go next and haven't explored
         for child in successors(current_state):
-            if child in explored: # skip children we already explored
+            if child in explored:  # skip children we already explored
                 continue
             explored.add(child)
             frontier.push(Node(child, current_node))
-    return None # went through everything and never found goal
+    return None  # went through everything and never found goal
 
-def A_star_search():
-    ...
+
+def manhattan_distance(goal: MazeLocation) -> Callable[[MazeLocation], float]:
+    def distance(ml: MazeLocation) -> float:
+        xdist: int = abs(ml.column - goal.column)
+        ydist: int = abs(ml.row - goal.row)
+        return (xdist + ydist)
+
+    return distance
+
+
+def astar(initial: T, goal_test: Callable[[T], bool], successors: Callable[[T], List[T]],
+          heuristic: Callable[[T], float]) -> Optional[Node[T]]:
+    # frontier is where we've yet to go
+    frontier: PriorityQueue[Node[T]] = PriorityQueue()
+    frontier.push(Node(initial, None, 0.0, heuristic(initial)))
+    # explored is where we've been
+    explored: Dict[T, float] = {initial: 0.0}
+    # keep going while there is more to explore
+    while not frontier.empty:
+        current_node: Node[T] = frontier.pop()
+        current_state: T = current_node.state
+        # if we found the goal, we're done
+        if goal_test(current_state):
+            return current_node
+        # check where we can go next and haven't explored
+        for child in successors(current_state):
+            new_cost: float = current_node.cost + 1  # 1 assumes a grid, need a cost function for more sophisticated apps
+            if child not in explored or explored[child] > new_cost:
+                explored[child] = new_cost
+                frontier.push(Node(child, current_node, new_cost, heuristic(child)))
+                print('')
+    return None  # went through everything and never found goal
