@@ -47,21 +47,35 @@ def linear_search(gene: Gene, codon_to_be_found: Codon):
     return False
 
 
-# TODO ASK. Recursion -> going down / going up for returning value
+# # TODO ASK. Recursion -> going down / going up for returning value
+# def binary_search(gene_str_sorted: str, codon_to_be_found: Codon):
+#     global RESULT_VAL
+#     mid_ind = len(gene_str_sorted) // 2
+#     if mid_ind == 0:
+#         RESULT_VAL = False
+#         return RESULT_VAL
+#     if gene_str_sorted[mid_ind] == codon_to_be_found:
+#         RESULT_VAL = True
+#         return RESULT_VAL
+#     elif codon_to_be_found < gene_str_sorted[mid_ind]:
+#         binary_search(gene_str_sorted[:mid_ind], codon_to_be_found)
+#     elif codon_to_be_found > gene_str_sorted[mid_ind]:
+#         binary_search(gene_str_sorted[mid_ind:], codon_to_be_found)
+#     return RESULT_VAL
+
+
+# DONE
 def binary_search(gene_str_sorted: str, codon_to_be_found: Codon):
-    global RESULT_VAL
     mid_ind = len(gene_str_sorted) // 2
     if mid_ind == 0:
-        RESULT_VAL = False
-        return RESULT_VAL
+        return False
     if gene_str_sorted[mid_ind] == codon_to_be_found:
-        RESULT_VAL = True
-        return RESULT_VAL
+        return True
     elif codon_to_be_found < gene_str_sorted[mid_ind]:
-        binary_search(gene_str_sorted[:mid_ind], codon_to_be_found)
+        r = binary_search(gene_str_sorted[:mid_ind], codon_to_be_found)
     elif codon_to_be_found > gene_str_sorted[mid_ind]:
-        binary_search(gene_str_sorted[mid_ind:], codon_to_be_found)
-    return RESULT_VAL
+        r = binary_search(gene_str_sorted[mid_ind:], codon_to_be_found)
+    return r
 
 
 def linear_contains(iterable: Iterable[T], key: T):

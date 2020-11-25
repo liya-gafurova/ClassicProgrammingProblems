@@ -9,3 +9,12 @@
 7. Real-world applications
 
 ## ?? CHOOSE TASK TO SOLVE ??
+## Data Structures
+
+The general advice is not to use **Abstract Classes** in your own code unless you are sure that
+you are building a framework upon which others will build, and not just a
+class hierarchy for internal use.
+
+## Algorithms
+
+Constraint-satisfaction problem

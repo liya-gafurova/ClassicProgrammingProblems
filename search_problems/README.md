@@ -5,7 +5,8 @@
 3. Missionaries and cannibals
 4. Real-world applications
 
-## ?? CHOOSE TASK TO SOLVE ??
+## Task to solve
+  2 - count number of states in Breadth-First Search, Depth-First Search and A star
 
 ## Data structures 
 
