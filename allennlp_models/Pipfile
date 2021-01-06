@@ -1,0 +1,34 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+allennlp = "*"
+torch = "1.4.0"
+nltk = "*"
+spacy = "*"
+ebooklib = "*"
+beautifulsoup4 = "*"
+tqdm = "*"
+regex = "*"
+gunicorn = "*"
+django = "*"
+psycopg2-binary = "*"
+whoosh = "*"
+djangorestframework = "*"
+django-cors-headers = "*"
+django-filter = "*"
+html5lib = "*"
+celery = "*"
+flair = "0.4.3"
+fairseq = "*"
+bert-extractive-summarizer = "*"
+transformers = "*"
+selenium = '*'
+dataclasses = "*"
+
+[requires]
+python_version = "3.6"

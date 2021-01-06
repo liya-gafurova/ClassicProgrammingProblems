@@ -1,0 +1,8 @@
+docker build -t memory_problems .
+
+docker run  -v /home/lia/PycharmProjects/IPR/ClassicProgrammingProblems/pretrained:/app/pretrained memory_problems:latest
+docker run  -v /home/lia/.cache/torch/transformers/:/root/.cache/torch/transformers/ memory_problems:latest
+
+docker run -v /home/lia/.allennlp/cache/:/root/.allennlp/cache/ \
+  -v /home/lia/.cache/torch/transformers/:/root/.cache/torch/transformers/ \
+  memory_problems:latest

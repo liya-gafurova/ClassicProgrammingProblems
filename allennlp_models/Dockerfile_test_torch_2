@@ -1,0 +1,32 @@
+FROM nvidia/cuda:9.1-runtime-ubuntu16.04
+
+RUN apt-get update && \
+  apt-get install -y software-properties-common
+
+RUN  add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install python3.6 -y
+
+
+
+RUN apt-get install -y build-essential python3.6 python3.6-dev python3-pip python3.6-venv
+RUN apt-get install -y git
+
+# update pip
+RUN python3.6 -m pip install pip --upgrade
+RUN python3.6 -m pip install wheel
+
+RUN pip3 install torch==1.2.0+cu92 torchvision==0.4.0+cu92 -f https://download.pytorch.org/whl/torch_stable.html
+
+RUN pip install pipenv
+
+WORKDIR /www/
+
+COPY ./Pipfile .
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+
+
+RUN pipenv install --skip-lock --system
