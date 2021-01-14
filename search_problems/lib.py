@@ -231,6 +231,8 @@ def bfs(initial: T, goal_test: Callable[[T], bool], successors: Callable[[T], Li
 
 
 def manhattan_distance(goal: MazeLocation) -> Callable[[MazeLocation], float]:
+
+    ## ЗАМЫКАНИЕ !!!!
     def distance(ml: MazeLocation) -> float:
         xdist: int = abs(ml.column - goal.column)
         ydist: int = abs(ml.row - goal.row)

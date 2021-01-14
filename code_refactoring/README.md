@@ -6,4 +6,4 @@ Provides PEP hints, package imports, package requirements, type checking, refere
    CTRL + F5  -> run code inspection
    
 
-2. 
+2.
