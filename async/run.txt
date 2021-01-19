@@ -1,0 +1,4 @@
+docker run -d -p 6379:6379 redis
+
+celery -A backend_flask.celery_app worker --loglevel=DEBUG
+gunicorn backend_flask:app -b 0.0.0.0:5000
