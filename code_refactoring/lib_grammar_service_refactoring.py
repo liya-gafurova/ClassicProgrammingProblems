@@ -10,22 +10,23 @@ import logging.config
 
 from nltk import sent_tokenize, pos_tag, word_tokenize
 
-from models.grammar_models import SingleResult, Native_LT_API_Model, SingleResultFromLanguageTool, AdditionalChecking,RuleIdNumber
+from models.grammar_models import (SingleResult, Native_LT_API_Model, RuleIdNumber,
+                                   SingleResultFromLanguageTool, AdditionalChecking)
 from core.lib import DISABLED_CATEGORIES, DISABLED_RULES
-from services.nlp_models import *
+from services.nlp_models import predict_mask, spacy_tokenizer, lemmatizer, default_conjugator
 from services.constants import *
-
 
 LT_URL = f'http://{settings.LT_HOST}:{settings.LT_PORT}/v2{settings.LAGUAGETOOL_API_CHECK}'
 
+
 def _predict_words(words: List[str], position: int, num_results: int = 5, options=None):
-    '''
+    """
     :param words: list of words
     :param position: word index to be replaced with <mask>
     :param num_results: number of words to be predicted with masked language modeling (roBERTa here)
     :param options: predict words from given options
     :return: predicted words
-    '''
+    """
     compiled_str = _replace_token_in_sentence(words, position, MASK)
     results = predict_mask(compiled_str, options=options, num_results=num_results)
     return results
@@ -38,12 +39,13 @@ def is_random_set_of_characters(text):
     # tokenize with spacy and find out of vocabulary tokens
     parsed_document = spacy_tokenizer(text)
     all_tokens = [(t, t.is_oov) for t in parsed_document]
-    out_of_vocabulary_tokens =  [t for t in all_tokens if t[1]]
+    out_of_vocabulary_tokens = [t for t in all_tokens if t[1]]
 
     # find out of vocabulary tokens quantity
     oov_percentage = len(out_of_vocabulary_tokens) / len(parsed_document)
 
     return oov_percentage > 0.4
+
 
 def _is_in_same_contracted_group(word, predicted_word):
     if word == predicted_word:
@@ -56,15 +58,15 @@ def _is_in_same_contracted_group(word, predicted_word):
 
 def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: str,
                            tagged_words: Tuple[str, str, str]) -> List[SingleResult]:
-    '''
+    """
 
     :param words: list of words in sentence
     :param sentence: real sentence, that has been written by user and not corrected at any way
     :param sent_decontracted: sentence that has been checked and corrected with LT, and part of contraction are removed
     :param tagged_words: [(word, universal_pos, detailed_pos), ...]
     :return: list of found mistakes and fixed sentence/
-     Fixed sentence is returned if we have high probability that predicted verb is from another Tence group
-    '''
+     Fixed sentence is returned if we have high probability that predicted verb is from another Tense group
+    """
     possible_errors = []
     fixed_sentence: Optional[str] = None
     for i, (word, pos, _) in enumerate(tagged_words):
@@ -75,13 +77,13 @@ def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: s
             results = _predict_words(words, i, options=AUX_FULL_FORMS, num_results=len(AUX_FULL_FORMS))
 
             first, second, third, forth = results[0], results[1], results[2], results[3]
-            logging.info(f"NEW: {word} -- {pos} -- {[first, second, third,forth]}")
+            logging.info(f"NEW: {word} -- {pos} -- {[first, second, third, forth]}")
             if first['softmax'] > 0.79 and not _is_in_same_contracted_group(word, first['word']):
                 err, to_be_corrected = True, True
             elif first['softmax'] < 0.1 and not _is_in_same_contracted_group(word, first['word']) and \
                     not _is_in_same_contracted_group(word, second['word']) and \
                     not _is_in_same_contracted_group(word, third['word']) and \
-                    not _is_in_same_contracted_group(word, forth['word']) :
+                    not _is_in_same_contracted_group(word, forth['word']):
                 err = True
             elif not _is_in_same_contracted_group(word, first['word']) and \
                     not _is_in_same_contracted_group(word, second['word']) and \
@@ -178,33 +180,34 @@ def _get_possible_forms_of_verb(word, pos='v'):
         for verb_group, value in config[g].items():
             try:
                 verb_forms.extend(value.values())
-            except:
+            except AttributeError:
                 verb_forms.append(value)
     verb_forms = set(verb_forms)
 
     str_for_typos_checking = " ".join(verb_forms)
 
-    errs =  send_to_language_tool(str_for_typos_checking, LT_URL)
+    errs = send_to_language_tool(str_for_typos_checking, LT_URL)
 
     matches = []
     for err_match in errs['matches']:
         sr, _ = create_mistake_description(err_match)
         matches.append(sr)
 
-    corrected_text = correct_errors_found_with_LT(str_for_typos_checking, matches)
+    corrected_text = correct_errors_found_with_Language_Tool(str_for_typos_checking, matches)
     corrected_text = corrected_text.lower().replace('to', '')
     verb_forms = set(corrected_text.split())
     return verb_forms
 
 
 def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
-    '''
+    """
     :param words: list
     :param real_sentence: sentence written by user
     :param sent_decontracted:  sentence corrected with LT and without contractions
     :param tagged_words: [(word, universal_pos, detailed_pos), ...]
-    :return: return grammar errors within verbs with issue type = 'Mistake' and incorrect verb usage with issue type 'Hint'
-    '''
+    :return: return grammar errors within verbs with issue type = 'Mistake'
+    and incorrect verb usage with issue type 'Hint'
+    """
     possible_errors, usage_hints = [], []
     for i, (word, pos, _) in enumerate(tagged_words):
         if pos == 'VERB':
@@ -238,11 +241,10 @@ def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
                     usage_hints.append(err)
                     continue
 
-                verb_forms =  _get_possible_forms_of_verb(word)
+                verb_forms = _get_possible_forms_of_verb(word)
                 common = verb_forms.intersection(set(predicted_words))
                 verb_form_predictions = _predict_words(words, i, num_results=len(verb_forms), options=list(verb_forms))
                 predicted_verbs = [res['word'] for res in verb_form_predictions]
-
 
                 if common != set() \
                         or (most_common_tag in VERB_TAGS and _is_in_different_pos_group(real_verb_nltk_post_tagged[1],
@@ -267,7 +269,7 @@ def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
     return possible_errors, usage_hints
 
 
-def _get_pos_tags(sent: str) -> Tuple[Tuple[str, str, str], List[str]]:
+def _get_pos_tags(sent: str) -> Tuple[List[Tuple[str, str, str]], List[str]]:
     pos_tagged_raw = spacy_tokenizer(sent)
     tagged_words = [(token.text, token.pos_, token.tag_) for token in pos_tagged_raw]
     words = [token.text for token in pos_tagged_raw]
@@ -330,7 +332,7 @@ def _check_word_usage(words, sentence, sent_decontracted, tagged_words):
             predicted_words = [r['word'] for r in results]
 
             if word not in predicted_words:
-                word_forms =  _get_possible_forms_of_verb(word, pos='a')
+                word_forms = _get_possible_forms_of_verb(word, pos='a')
                 common = word_forms.intersection(set(predicted_words))
 
                 if common != set():
@@ -359,31 +361,33 @@ def _check_prepositions(words, real_sentence, sent_decontracted, tagged_words) -
         if tag in ['ADP', 'CCONJ']:
             # we are going to check prepositions and postpositions. And also  coordinating conjunction
             results = _predict_words(words, i, num_results=5)
-            results_dict = {result['word'] : result['softmax'] for result in results}
+            results_dict = {result['word']: result['softmax'] for result in results}
             softmax_sum = sum(results_dict.values())
             if word not in results_dict.keys() and softmax_sum > 0.8:
                 print(f"CANDIDATES for {word}: {results_dict}")
                 logging.info(f"CANDIDATES for {word}: {results_dict}")
                 sr = SingleResult(
-                   category = "HINTS",
-                   context=_get_mistake_context( number_of_neighbors=4,  words=words, current_word_id=i),
-                   errorLength=len(word),
-                   matchedText=word,
-                   message="Perhaps incorrect preposition usage.",
-                   offset=sent_decontracted.find(word),
-                   offsetInContext=None,
-                   replacements=list(results_dict.keys())[:3],
-                   ruleId='INCORRECT_WORD_USAGE',
-                   ruleIssueType='Hint',
-                   sentence=real_sentence
+                    category="HINTS",
+                    context=_get_mistake_context(number_of_neighbors=4, words=words, current_word_id=i),
+                    errorLength=len(word),
+                    matchedText=word,
+                    message="Perhaps incorrect preposition usage.",
+                    offset=sent_decontracted.find(word),
+                    offsetInContext=None,
+                    replacements=list(results_dict.keys())[:3],
+                    ruleId='INCORRECT_WORD_USAGE',
+                    ruleIssueType='Hint',
+                    sentence=real_sentence
                 )
                 sr.offsetInContext = sr.context.find(word)
                 prepositions_errors.append(sr)
 
     return prepositions_errors
 
+
 class ArticleMistake(Exception):
-    def __init__(self, position_token = "the", replacement = '', message: str = "Article 'the' is needed in the position: {}", position: int = 0):
+    def __init__(self, position_token="the", replacement='',
+                 message: str = "Article 'the' is needed in the position: {}", position: int = 0):
         self.message = message.format(position)
         self.position_token = position_token
         self.replacement = replacement
@@ -395,23 +399,21 @@ def _check_artickes(words, sentence, sent_decontracted, tagged_words):
     errs = []
     for ent in doc.ents:
         if ent.label_ in ['GPE']:
-
+            # get NP containing GPE NER (country, state, city)
             NPs = [np.text.lower().split() for np in doc.noun_chunks if
                    (np.text.find(ent.text) > -1 or ent.text.find(np.text) > -1) and np.text != 'i']
             NPs_list = list(itertools.chain.from_iterable(NPs))
             chunk = ' '.join(NPs_list)
-            print(chunk)
-
             GPE_subphrase = set(ent.text.lower().split()).union(set(NPs_list))
-            print(f"GPE set of tokens = {GPE_subphrase}")
 
+            # Check NP phrase with GPE entity with country names in provided list
             try:
                 if chunk.find('the') > -1:
                     for country in NO_COUNTRIES:
                         diff = GPE_subphrase.difference(set(country.split()))
                         if diff == {'the'} or diff == {'a'}:
                             raise ArticleMistake(position_token=list(diff).pop(),
-                                                 replacement = '',
+                                                 replacement='',
                                                  message="There should not be an article in the position: {}",
                                                  position=sentence.find(ent.text))
                 elif chunk.find('the') == -1:
@@ -424,25 +426,23 @@ def _check_artickes(words, sentence, sent_decontracted, tagged_words):
             except ArticleMistake as e:
                 print(e.message)
                 sr = SingleResult(category="HINTS",
-                             context='',
-                             errorLength=3,
-                             matchedText=e.position_token,
-                             message=e.message,
-                             offset=sentence.find(e.position_token),
-                             replacements=[e.replacement],
-                             ruleId="ARTICLES_BEFORE_COUNTRIES",
-                             ruleIssueType='Hint',
-                             sentence=sentence
-                             )
+                                  context='',
+                                  errorLength=3,
+                                  matchedText=e.position_token,
+                                  message=e.message,
+                                  offset=sentence.find(e.position_token),
+                                  replacements=[e.replacement],
+                                  ruleId="ARTICLES_BEFORE_COUNTRIES",
+                                  ruleIssueType='Hint',
+                                  sentence=sentence
+                                  )
                 sr.offsetInContext = 0
                 errs.append(sr)
 
     return errs
 
 
-
-
-def additional_check_with_roBERTa(prettified_text:str, source_text:str, categories: dict) -> AdditionalChecking:
+def additional_check_with_roBERTa(prettified_text: str, source_text: str, categories: dict) -> AdditionalChecking:
     prettified_sentences = sent_tokenize(prettified_text)
     real_sentences = sent_tokenize(source_text)
 
@@ -476,15 +476,15 @@ def additional_check_with_roBERTa(prettified_text:str, source_text:str, categori
             tagged_words_for_verb_checking, words_for_verb_checking = _get_pos_tags(fixed_sentence)
             params = (words_for_verb_checking, sentence, sent_decontracted, tagged_words_for_verb_checking)
 
-        possible_verb_errors, usage_hints =  _check_verbs(*params)
+        possible_verb_errors, usage_hints = _check_verbs(*params)
 
         possible_verb_errors_list.extend(possible_verb_errors)
         usage_hints_list.extend(usage_hints)
 
         # Check correct word usage
         # TODO real_sentences[i] <- sentence
-        usage_hints_all_verds =  _check_word_usage(words, sentence, sent_decontracted, tagged_words)
-        usage_hints_list.extend(usage_hints_all_verds)
+        usage_hints_all_verbs = _check_word_usage(words, sentence, sent_decontracted, tagged_words)
+        usage_hints_list.extend(usage_hints_all_verbs)
 
         # Check prepositions
         possible_preposition_errors = _check_prepositions(words, sentence, sent_decontracted, tagged_words)
@@ -499,12 +499,11 @@ def additional_check_with_roBERTa(prettified_text:str, source_text:str, categori
             if se.category == 'HINTS':
                 usage_hints_list.append(se)
 
-
         print("==================================================================\n\n")
-    for err in possible_aux_errors_list + possible_verb_errors_list + usage_hints_list :
+    for err in possible_aux_errors_list + possible_verb_errors_list + usage_hints_list:
         categories[err.category]['ruleIds'].append(
             RuleIdNumber(ruleId=err.ruleId, number_of_mistakes=1).dict()
-        ) # HERE
+        )  # HERE
         categories[err.category]['mistakes_number'] += 1
 
     adds = AdditionalChecking(
@@ -596,7 +595,7 @@ def mistake_already_caught(results: List[SingleResultFromLanguageTool],
     return False
 
 
-def correct_errors_found_with_LT(text: str, matches: List[SingleResult]) -> str:
+def correct_errors_found_with_Language_Tool(text: str, matches: List[SingleResult]) -> str:
     """Automatically apply suggestions found with LanguageTool to the text."""
     ltext = list(text)
     matches = [match for match in matches if match.replacements]
@@ -615,12 +614,9 @@ def correct_errors_found_with_LT(text: str, matches: List[SingleResult]) -> str:
             context = ltext.copy()
             context[frompos:topos] = list(MASK)
             compiled_text = nltk.sent_tokenize(''.join(context))
-            for sent in compiled_text:
-                if sent.find(MASK) > -1:
-                    s = sent
-                    break
-            res = predict_mask(s, options=possible_replacements,
-                                             num_results=len(possible_replacements))
+            compiled_str = next((sent for sent in sent_tokenize(compiled_text) if sent.find(MASK) > -1), None)
+            res = predict_mask(compiled_str, options=possible_replacements,
+                               num_results=len(possible_replacements))
             replacement = res[0]['word']
         else:
             replacement = match.replacements[0]
@@ -669,11 +665,10 @@ def check_for_unsuitable_replacements(sr):
     if sr.ruleId == "PEOPLE_VBZ":
         replacements = [r for r in sr.replacements if r != "am"]
     if sr.ruleId == "EN_PLAIN_ENGLISH_REPLACE":
-        replacements = [r for r in sr.replacements if r!= "[OMIT]"]# "OMIT" tells you to cut the  matched text
-    if sr.ruleId == 'TOO_DETERMINER':  # this rule will be checked with roberta futher
+        replacements = [r for r in sr.replacements if r != "[OMIT]"]  # "OMIT" tells you to cut the  matched text
+    if sr.ruleId == 'TOO_DETERMINER':  # this rule will be checked with roberta further
         replacements = [sr.matchedText]
         has_to_be_correct = False
-
 
     if not replacements:
         has_to_be_correct = False
@@ -704,10 +699,11 @@ def create_hash_for_text(text: str):
     hash_object = hashlib.md5(text.encode() + current_time.encode())
     return hash_object.hexdigest()
 
+
 def reorganize_categories(categories: dict):
     out = copy.deepcopy(categories)
-    for category,  value in categories.items():
-        rules  = value['ruleIds']
+    for category, value in categories.items():
+        rules = value['ruleIds']
         value['ruleIds'] = list()
         d = {}
         values = []
@@ -718,16 +714,21 @@ def reorganize_categories(categories: dict):
             else:
                 d[rule_name] += 1
         for r, v in d.items():
-            rr = RuleIdNumber(ruleId = r, number_of_mistakes = v)
+            rr = RuleIdNumber(ruleId=r, number_of_mistakes=v)
             values.append(rr.dict())
         out[category]['ruleIds'] = values
     return out
 
 
-def get_avg_grade(readability_desc:str):
-    ''' return "{}{} and {}{} grade".format(
-                lower_score, get_grade_suffix(lower_score),
+def get_avg_grade(readability_desc: str):
+    """
+
+    :param readability_desc: textstat library returns result in format:
+    "{}{} and {}{} grade".format(lower_score, get_grade_suffix(lower_score),
                 upper_score, get_grade_suffix(upper_score)
-            )'''
+            )
+    :return: average grade gotten from "lower_score" and "upper_score" values
+    """
     numbers = re.findall(r'\d+', readability_desc)
-    return sum(list(map(int,numbers))) / len(numbers)
+    return sum(list(map(int, numbers))) / len(numbers)
+
