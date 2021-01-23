@@ -24,8 +24,8 @@ def _predict_words(words: List[str], position: int, num_results: int = 5, option
     :param words: list of words
     :param position: word index to be replaced with <mask>
     :param num_results: number of words to be predicted with masked language modeling (roBERTa here)
-    :param options: predict words from given options
-    :return: predicted words
+    :param options: predict words from given options.
+    :return: predicted words.
     """
     compiled_str = _replace_token_in_sentence(words, position, MASK)
     results = predict_mask(compiled_str, options=options, num_results=num_results)
@@ -63,9 +63,9 @@ def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: s
     :param words: list of words in sentence
     :param sentence: real sentence, that has been written by user and not corrected at any way
     :param sent_decontracted: sentence that has been checked and corrected with LT, and part of contraction are removed
-    :param tagged_words: [(word, universal_pos, detailed_pos), ...]
+    :param tagged_words: [(word, universal_pos, detailed_pos), ...].
     :return: list of found mistakes and fixed sentence/
-     Fixed sentence is returned if we have high probability that predicted verb is from another Tense group
+     Fixed sentence is returned if we have high probability that predicted verb is from another Tense group.
     """
     possible_errors = []
     fixed_sentence: Optional[str] = None
@@ -206,7 +206,7 @@ def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
     :param sent_decontracted:  sentence corrected with LT and without contractions
     :param tagged_words: [(word, universal_pos, detailed_pos), ...]
     :return: return grammar errors within verbs with issue type = 'Mistake'
-    and incorrect verb usage with issue type 'Hint'
+    and incorrect verb usage with issue type 'Hint'.
     """
     possible_errors, usage_hints = [], []
     for i, (word, pos, _) in enumerate(tagged_words):
@@ -566,7 +566,7 @@ def _get_mistake_context(number_of_neighbors, words, current_word_id):
 
 
 def send_to_language_tool(text: str, url: str, with_disabled_rules: bool = False) -> Dict[str, Any]:
-    # TODO replace with aiohttp ???
+
     params = Native_LT_API_Model(text=text, disabledRules=",".join(RULES_TO_DISABLE))
     if with_disabled_rules:
         params.enabledCategories = ','.join(DISABLED_CATEGORIES)
@@ -722,12 +722,11 @@ def reorganize_categories(categories: dict):
 
 def get_avg_grade(readability_desc: str):
     """
-
     :param readability_desc: textstat library returns result in format:
     "{}{} and {}{} grade".format(lower_score, get_grade_suffix(lower_score),
                 upper_score, get_grade_suffix(upper_score)
-            )
-    :return: average grade gotten from "lower_score" and "upper_score" values
+            ).
+    :return: average grade gotten from "lower_score" and "upper_score" values.
     """
     numbers = re.findall(r'\d+', readability_desc)
     return sum(list(map(int, numbers))) / len(numbers)
