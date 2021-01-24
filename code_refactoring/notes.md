@@ -11,17 +11,17 @@
 - *loop ... else* close/ Better not to use  
 - Exceptions: "Python’s credo is “It’s easier to ask forgiveness than permission.” This means that you don’t check beforehand to make sure you won’t get an exception; instead, if you get exception, you handle it"  
 - Exceptions: *Finally* close better to use   
-- "Prefer to Have Minimum Code Under try" **TO FIX**  
+- "Prefer to Have Minimum Code Under try" **TO FIX -no-> logging**  
 --------------------------------------------
 
 ### Data structures
 
 - Use Sets for Speed
-- Use namedtuple for Returning and Accessing Data **TO FIX**  
+- Use namedtuple for Returning and Accessing Data **TO FIX - no**  
 - Return the Data -- named tuple instead of tuple  
 - "Finally, if you want to convert namedtuple to a dict or convert a list to namedtuple, namedtuple gives you methods to do it easily. So, they are flexible as well. "  
-- "Use Lists Carefully and Prefer Generators" **TRY TO FIX**  
-- Counter -> **TO FIX !!!!!** pg 50  
+- "Use Lists Carefully and Prefer Generators" **TRY TO FIX -ok**  
+- Counter -> **TO FIX - ok!!!!!** pg 50  
 - collections - deque, defaultdict, oredereddict, namedtuple
 
 --------------------------------------------
@@ -52,7 +52,7 @@
 • Rate limiting  
 • Caching values  
 • Timing the runtime of a function  
-• Logging purposes  **FOR LOGGING - FIX**  
+• Logging purposes  **FOR LOGGING - FIX -ok**  
 • Caching exceptions or raising them  
 • Authentication
 - *functools* -> can debug wrappers
@@ -67,7 +67,7 @@ https://devpractice.ru/python-lesson-21-context-manager/
 ### Generators and iterators
 
 https://habr.com/ru/post/488112/  
-- Generators -> *yield* operator  (заменить писки на генераторы для оптимизации памяти **TRY TO FIX**)  
+- Generators -> *yield* operator  (заменить писки на генераторы для оптимизации памяти **TRY TO FIX - ok**)  
 - Difference between Generators and Iterators https://cutt.ly/fjCgoCZ  
 - Generators, *yield*, *yield from* 
 - itertools  

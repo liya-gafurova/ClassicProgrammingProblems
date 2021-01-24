@@ -15,11 +15,14 @@ from nltk import sent_tokenize, pos_tag, word_tokenize, WhitespaceTokenizer
 from models.grammar_models import (SingleResult, Native_LT_API_Model, RuleIdNumber,
                                    SingleResultFromLanguageTool, AdditionalChecking, Categories, CategoryDescription)
 from core.lib import DISABLED_CATEGORIES, DISABLED_RULES
+
+from .decorators import create_logger, logged
 from .nlp_models import predict_mask, spacy_tokenizer, lemmatizer, default_conjugator
 from .constants import *
 
 LT_URL = f'http://{settings.LT_HOST}:{settings.LT_PORT}/v2{settings.LAGUAGETOOL_API_CHECK}'
 
+logger = create_logger()
 
 class TextGrammarCheckingResult:
     """
@@ -75,6 +78,7 @@ class TextGrammarCheckingResult:
             possible_articles_mistakes = _check_artickes(words, sentence, sent_decontracted, tagged_words)
             self._usage_hints_list.extend(possible_articles_mistakes)
 
+    @logged(logger)
     def get_result_with_updated_categories(self):
 
         for err in self._possible_aux_errors_list + self._possible_verb_errors_list + self._usage_hints_list:
@@ -126,13 +130,13 @@ class TextGrammarCheckingResult:
         phrase = re.sub(r"[’'`]m", " am", phrase)
         return phrase
 
-
+@logged(logger)
 def _create_single_error(word: str, words: List[str], current_word_position: str, sent_decontracted: str, sentence: str,
                          category: str, message: str,
                          replacements: List[str], rule_id: str, rule_issue_type: str,
                          matched_text: str = None, ) -> SingleResult:
     """create Single Error description object."""
-
+    @logged(logger)
     def get_mistake_context(number_of_neighbors, words, current_word_id):
         last_index = len(words)
         left_border = 0 if (current_word_id - number_of_neighbors) < 0 else (current_word_id - number_of_neighbors)
@@ -174,7 +178,7 @@ def _predict_words(words: List[str], position: int, num_results: int = 5, option
     results = predict_mask(compiled_str, options=options, num_results=num_results)
     return results
 
-
+@logged(logger)
 def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: str,
                            tagged_words: Tuple[str, str, str]) -> List[SingleResult]:
     """
@@ -186,7 +190,7 @@ def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: s
     :return: list of found mistakes and fixed sentence/
      Fixed sentence is returned if we have high probability that predicted verb is from another Tense group.
     """
-
+    @logged(logger)
     def is_in_same_contracted_group(word, predicted_word):
         if word == predicted_word:
             return True
@@ -232,7 +236,7 @@ def _check_auxiliary_verbs(words: List[str], sentence: str, sent_decontracted: s
 
     return possible_errors, fixed_sentence
 
-
+@logged(logger)
 def _get_possible_forms_of_verb(word:str , pos='v'):
     """
     :param word: word (verb  mostly)
@@ -266,7 +270,7 @@ def _get_possible_forms_of_verb(word:str , pos='v'):
     verb_forms = set(corrected_text.split())
     return verb_forms
 
-
+@logged(logger)
 def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
     """
     :param words: list
@@ -346,9 +350,11 @@ def _check_verbs(words, real_sentence, sent_decontracted, tagged_words):
 
     return possible_errors, usage_hints
 
-
+@logged(logger)
 def _check_word_usage(words, sentence, sent_decontracted, tagged_words):
     """ Check One-Letter-Typos, Adjectives and to/too usage  """
+
+    @logged(logger)
     def check_to_too_is_correct(word, i, words):
         options = ['too', 'to']
         results = _predict_words(words, i, options=options, num_results=len(options))
@@ -357,7 +363,6 @@ def _check_word_usage(words, sentence, sent_decontracted, tagged_words):
     possible_errors_usages = []
     for i, (word, tag, _) in enumerate(tagged_words):
 
-        # Проверить на односложные слова
         if len(word) == 1 and word.isalpha() and word not in ONE_LETTER_WORDS and \
                 not (word == 'e' and words[i + 1] == '-'):
             possible_errors_usages.append(
@@ -395,7 +400,7 @@ def _check_word_usage(words, sentence, sent_decontracted, tagged_words):
 
     return possible_errors_usages
 
-
+@logged(logger)
 def _check_prepositions(words, real_sentence, sent_decontracted, tagged_words) -> List[SingleResult]:
     """ Check preposition and coordinating conjunction usage  """
     prepositions_errors = []
@@ -416,9 +421,11 @@ def _check_prepositions(words, real_sentence, sent_decontracted, tagged_words) -
 
     return prepositions_errors
 
-
+@logged(logger)
 def _check_artickes(words, sentence, sent_decontracted, tagged_words):
     """ Check articles usage before names of the Countries """
+
+    @logged(logger)
     def get_article_token_id(sentence_substr: str):
         span_generator = WhitespaceTokenizer().span_tokenize(sentence_substr)
         spans = [span for span in span_generator]
@@ -462,12 +469,12 @@ def _check_artickes(words, sentence, sent_decontracted, tagged_words):
 
     return errs
 
-
+@logged(logger)
 def _replace_token_in_sentence(words: List[str], id_of_token_to_be_replaced: int, token_for_replacement: str):
     last = [] if id_of_token_to_be_replaced == len(words) - 1 else words[id_of_token_to_be_replaced + 1:]
     return ' '.join(words[:id_of_token_to_be_replaced] + [token_for_replacement] + last)
 
-
+@logged(logger)
 def _static_rules(sentence: str) -> Optional[List[SingleResult]]:
     """
     :param sentence: sentence from users text
@@ -485,7 +492,7 @@ def _static_rules(sentence: str) -> Optional[List[SingleResult]]:
 
     return errors_caught_with_static_rules
 
-
+@logged(logger)
 def send_to_language_tool(text: str, url: str, with_disabled_rules: bool = False) -> Dict[str, Any]:
     params = Native_LT_API_Model(text=text, disabledRules=",".join(RULES_TO_DISABLE))
     if with_disabled_rules:
@@ -506,7 +513,7 @@ def send_to_language_tool(text: str, url: str, with_disabled_rules: bool = False
 
     return json.loads(response.text)
 
-
+@logged(logger)
 def mistake_already_caught(results: List[SingleResultFromLanguageTool],
                            current_mistake: SingleResultFromLanguageTool) -> bool:
     """check for duplicate errors found within LanguageTool (with and without disabled rules)."""
@@ -515,7 +522,7 @@ def mistake_already_caught(results: List[SingleResultFromLanguageTool],
             return True
     return False
 
-
+@logged(logger)
 def correct_errors_found_with_Language_Tool(text: str, matches: List[SingleResult]) -> str:
     """Automatically apply suggestions found with LanguageTool to the text."""
     ltext = list(text)
@@ -546,13 +553,13 @@ def correct_errors_found_with_Language_Tool(text: str, matches: List[SingleResul
         correct_offset += len(replacement) - len(errors[n])
     return ''.join(ltext)
 
-
+@logged(logger)
 def get_errors_with_replacements(errs_matches):
     # get errors from LT which have replacements
     return [err for err in errs_matches['matches'] if err['replacements'] != []
             and err['rule']['category']['id'] not in REDUNDANT_CATEGORIES]
 
-
+@logged(logger)
 def check_for_unsuitable_replacements(sr):
     """remove the changes replacements by LanguageTool if they are completely unsuitable for the fixing."""
     replacements = sr.replacements
@@ -570,7 +577,7 @@ def check_for_unsuitable_replacements(sr):
 
     return replacements, has_to_be_correct
 
-
+@logged(logger)
 def create_mistake_description(single_result: dict) -> SingleResultFromLanguageTool:
     sr = SingleResultFromLanguageTool(
         category=single_result['rule']['category']['name'],
@@ -594,7 +601,7 @@ def create_hash_for_text(text: str):
     hash_object = hashlib.md5(text.encode() + current_time.encode())
     return hash_object.hexdigest()
 
-
+@logged(logger)
 def reorganize_categories(categories: dict) -> dict:
     """
     :param categories: dictionary with Categories analytics
@@ -611,7 +618,7 @@ def reorganize_categories(categories: dict) -> dict:
 
     return categories
 
-
+@logged(logger)
 def get_avg_grade(readability_desc: str):
     """
     :param readability_desc: textstat library returns result in format:
@@ -623,7 +630,7 @@ def get_avg_grade(readability_desc: str):
     numbers = re.findall(r'\d+', readability_desc)
     return sum(list(map(int, numbers))) / len(numbers)
 
-
+@logged(logger)
 def is_random_set_of_characters(text):
     # delete punctuation
     text = re.sub(f"[{string.punctuation}]", ' ', text)
